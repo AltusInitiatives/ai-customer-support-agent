@@ -159,8 +159,8 @@ curl -X POST https://your-n8n-url/webhook/day-35-capstone \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "s1",
-    "name": "Nicole Liu",
-    "email": "nicole_liu@example.com",
+    "name": "Nicky Liu",
+    "email": "nicky_liu@example.com",
     "question": "What is your return policy?",
     "order_id": ""
   }'
@@ -172,8 +172,8 @@ curl -X POST https://your-n8n-url/webhook/day-35-capstone \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "s2",
-    "name": "Samantha Wong",
-    "email": "samantha_wong@example.com",
+    "name": "Sam Wang",
+    "email": "sam_wang@example.com",
     "question": "Where is my order right now?",
     "order_id": "as002"
   }'
@@ -185,8 +185,8 @@ curl -X POST https://your-n8n-url/webhook/day-35-capstone \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "s3",
-    "name": "Marina Puffer",
-    "email": "marina_puffer@example.com",
+    "name": "Marina Poster",
+    "email": "marina_poster@example.com",
     "question": "What have I ordered from you before?",
     "order_id": ""
   }'
@@ -198,8 +198,8 @@ curl -X POST https://your-n8n-url/webhook/day-35-capstone \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "s4",
-    "name": "Samantha Wong",
-    "email": "samantha_wong@example.com",
+    "name": "Sam Wang",
+    "email": "sam_wang@example.com",
     "question": "I want to negotiate a wholesale partnership deal for 1000 units per month.",
     "order_id": ""
   }'
@@ -215,8 +215,8 @@ curl -X POST https://your-n8n-url/webhook/day-35-capstone \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "s5",
-    "name": "Marina Puffer",
-    "email": "marina_puffer@example.com",
+    "name": "Marina Poster",
+    "email": "marina_poster@example.com",
     "question": "I just want to confirm my order was delivered successfully.",
     "order_id": "as004"
   }'
@@ -226,8 +226,8 @@ curl -X POST https://your-n8n-url/webhook/day-35-capstone \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "s5",
-    "name": "Marina Puffer",
-    "email": "marina_puffer@example.com",
+    "name": "Marina Poster",
+    "email": "marina_poster@example.com",
     "question": "What product did I order?",
     "order_id": ""
   }'
