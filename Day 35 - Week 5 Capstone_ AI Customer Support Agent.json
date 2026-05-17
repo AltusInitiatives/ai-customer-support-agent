@@ -1,0 +1,668 @@
+{
+  "name": "Day 35 - Week 5 Capstone: AI Customer Support Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "day-35-capstone",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4e78e8cc-9d09-4c49-9d56-0c9933bc6ef6",
+      "name": "Webhook",
+      "webhookId": "7758f052-2856-4722-90fe-c2e447a8b025"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json.output;\n\n// Extract confidence score from the response\nconst confidenceMatch = output.match(/CONFIDENCE:\\s*(\\d+)/i);\nconst confidenceScore = confidenceMatch ? parseInt(confidenceMatch[1]) : 5;\n\n// Clean the response by removing the confidence line\nconst cleanResponse = output.replace(/\\nCONFIDENCE:\\s*\\d+/i, '').trim();\n\nreturn [{\n  json: {\n    response: cleanResponse,\n    confidence_score: confidenceScore,\n    escalate: confidenceScore < 7,\n    name: $('Webhook').first().json.body.name,\n    email: $('Webhook').first().json.body.email,\n    question: $('Webhook').first().json.body.question,\n    order_id: $('Webhook').first().json.body.order_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        0
+      ],
+      "id": "1d27a80f-0f53-40c5-9819-170700aef4d7",
+      "name": "Parse Confidence Score"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        224
+      ],
+      "id": "0bd11466-4544-40e4-aefc-749c429e1ceb",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "mG9zy8tMQKgjZNPC",
+          "name": "Anthropic Learning"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Search the AltusShop FAQ knowledge base to find answers to common customer questions about returns, shipping, payments, and policies.",
+        "documentId": {
+          "__rl": true,
+          "value": "1DbrnL4mRuVjMjjMYBLrIh2UyKjk6no3PBlWRGA0A8CI",
+          "mode": "list",
+          "cachedResultName": "AltusShop FAQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DbrnL4mRuVjMjjMYBLrIh2UyKjk6no3PBlWRGA0A8CI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "FAQ Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DbrnL4mRuVjMjjMYBLrIh2UyKjk6no3PBlWRGA0A8CI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        224
+      ],
+      "id": "82d390ff-f680-4787-8a2b-5ef889f6e0c1",
+      "name": "faq_search",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FNBGjwBvt0hJOehh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Look up the current shipping status of a customer order. Input must be the order_id.",
+        "url": "https://altusinitiatives.app.n8n.cloud/webhook-test/day-35-mock-api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "order_id",
+              "value": "={{ $json.body.order_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        608,
+        224
+      ],
+      "id": "12ae0323-a245-4c42-adbb-dd82db196f9e",
+      "name": "order_status"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Look up a customer's purchase history using their email address to see previous orders and products.",
+        "documentId": {
+          "__rl": true,
+          "value": "1symqmFophjAmt0-_jNY_gaNUUU4KjHzgZoISoPAXFGg",
+          "mode": "list",
+          "cachedResultName": "AltusShop Customer History",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1symqmFophjAmt0-_jNY_gaNUUU4KjHzgZoISoPAXFGg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Customer Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1symqmFophjAmt0-_jNY_gaNUUU4KjHzgZoISoPAXFGg/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        224
+      ],
+      "id": "f306d0e9-68eb-47a4-87c8-76363d84fa6d",
+      "name": "customer_history",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FNBGjwBvt0hJOehh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"response\": \"{{ $json.response }}\",\n  \"confidence_score\": \"{{ $json.confidence_score }}\",\n  \"escalated\": \"{{ $json.escalated }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1840,
+        0
+      ],
+      "id": "75d5a7af-3a6b-427b-9c18-aba9d620c041",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=name: {{ $json.body.name }}\nemail: {{ $json.body.email }}\nquestion: {{ $json.body.question }}\norder_id: {{ $json.body.order_id }}\n\nWrite up a maximum 3 sentence response that is appropriate and clear. Make sure your response does not have any new line (\\n).",
+        "options": {
+          "systemMessage": "You are a customer support agent for AltusShop, a friendly e-commerce company.\n\nYour job is to help customers with their questions accurately and professionally.\n\nYou have access to three tools:\n- faq_search: Search the FAQ knowledge base for answers to common questions\n- order_status: Look up the current status of a customer's order using their order_id\n- customer_history: Look up a customer's purchase history using their email address\n\nAlways use the appropriate tool before responding. Do not make up information.\n\nAt the end of every response, you MUST include a confidence score on a new line in\nexactly this format:\nCONFIDENCE: [number between 1 and 10]\n\nA score of 1-6 means you were unable to find a satisfactory answer and the issue\nshould be escalated to a human agent. A score of 7-10 means you answered confidently\nfrom available information.\n\nIf the question is out of your scope as a customer support agent, the maximum confidence score you can assign is 6.\n\nIf a customer mentions legal action, lawsuits, or attorneys, assign a confidence score of 1 and flag the escalation as LEGAL in your response.\n\nDo not use markdown formatting. Write in plain text only."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3ce16b5e-0bdc-4e06-9a3a-d9c3eb2313d1",
+      "name": "AI Customer Support Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d09a6cc-0958-4871-98d1-2218dfb8fa17",
+              "leftValue": "={{ $json.escalate }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "6cb86191-5d64-492d-a01c-6ac90ccb8f08",
+      "name": "IF escalate = true"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0B0PJU2Z0W",
+          "mode": "list",
+          "cachedResultName": "make-testing"
+        },
+        "text": "=---NEW ESCALATED TICKET---\nname: {{ $('Parse Confidence Score').item.json.name }}\nemail: {{ $('Parse Confidence Score').item.json.email }}\norder_id: {{ $('Parse Confidence Score').item.json.order_id }}\nquestion: {{ $('Parse Confidence Score').item.json.question }}\nresponse: {{ $('Parse Confidence Score').item.json.response }}\nconfidence_score: {{ $('Parse Confidence Score').item.json.confidence_score }}\nescalate: {{ $('Parse Confidence Score').item.json.escalate }}\n\nPlease review and take appropriate action as soon as possible.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1392,
+        -96
+      ],
+      "id": "06b974b2-9908-4a3f-ae7d-f93e4012d6f1",
+      "name": "Send Alert Message",
+      "webhookId": "8ad308b8-4d33-4309-9ac1-c4eb2f07882a",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "EtW9UZbJQQjZezfG",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NqGdSsD9yrrNPF5LDX-9ZPR5RlDap_d1UFVoIZrc4y8",
+          "mode": "list",
+          "cachedResultName": "AltusShop Support Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NqGdSsD9yrrNPF5LDX-9ZPR5RlDap_d1UFVoIZrc4y8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Support Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NqGdSsD9yrrNPF5LDX-9ZPR5RlDap_d1UFVoIZrc4y8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "name": "={{ $('Parse Confidence Score').item.json.name }}",
+            "email": "={{ $('Parse Confidence Score').item.json.email }}",
+            "question": "={{ $('Parse Confidence Score').item.json.question }}",
+            "order_id": "={{ $('Parse Confidence Score').item.json.order_id }}",
+            "response": "={{ $('Parse Confidence Score').item.json.response }}",
+            "confidence_score": "={{ $('Parse Confidence Score').item.json.confidence_score }}",
+            "escalated": "={{ $('Parse Confidence Score').item.json.escalate }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "question",
+              "displayName": "question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "response",
+              "displayName": "response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence_score",
+              "displayName": "confidence_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "escalated",
+              "displayName": "escalated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1616,
+        96
+      ],
+      "id": "ee81cb56-9e60-4b25-b9ac-c68cbf74d129",
+      "name": "FALSE Log to Support Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FNBGjwBvt0hJOehh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NqGdSsD9yrrNPF5LDX-9ZPR5RlDap_d1UFVoIZrc4y8",
+          "mode": "list",
+          "cachedResultName": "AltusShop Support Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NqGdSsD9yrrNPF5LDX-9ZPR5RlDap_d1UFVoIZrc4y8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Support Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NqGdSsD9yrrNPF5LDX-9ZPR5RlDap_d1UFVoIZrc4y8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "name": "={{ $('Parse Confidence Score').item.json.name }}",
+            "email": "={{ $('Parse Confidence Score').item.json.email }}",
+            "question": "={{ $('Parse Confidence Score').item.json.question }}",
+            "order_id": "={{ $('Parse Confidence Score').item.json.order_id }}",
+            "response": "={{ $('Parse Confidence Score').item.json.response }}",
+            "confidence_score": "={{ $('Parse Confidence Score').item.json.confidence_score }}",
+            "escalated": "={{ $('Parse Confidence Score').item.json.escalate }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "question",
+              "displayName": "question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "response",
+              "displayName": "response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence_score",
+              "displayName": "confidence_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "escalated",
+              "displayName": "escalated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1616,
+        -96
+      ],
+      "id": "a3c7102f-c5de-4a7d-ae4a-a7d11cf669cf",
+      "name": "TRUE Log to Support Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FNBGjwBvt0hJOehh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.session_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        224
+      ],
+      "id": "1e673aad-f52e-42cd-9a49-a3ce768f4c6a",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Customer Support Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Customer Support Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "faq_search": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "order_status": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "customer_history": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Customer Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Confidence Score": {
+      "main": [
+        [
+          {
+            "node": "IF escalate = true",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Customer Support Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Confidence Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF escalate = true": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FALSE Log to Support Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Alert Message": {
+      "main": [
+        [
+          {
+            "node": "TRUE Log to Support Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TRUE Log to Support Sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FALSE Log to Support Sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Customer Support Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "932d1ae4-6f63-49a3-a2e3-dcc575bbfb10",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43af7838d6c50f303e33219d2b2433e4f12f7e18bb9af6ea34d3a1e9e7618dd7"
+  },
+  "id": "wMf8eUk4Zo2maFcX",
+  "tags": []
+}
